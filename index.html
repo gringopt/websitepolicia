@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<title>MDT Policial</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Segoe UI;
+background:#0b0f17;
+color:white;
+display:flex;
+height:100vh;
+}
+
+.sidebar{
+width:230px;
+background:#111827;
+padding:15px;
+}
+
+.logo{
+font-size:20px;
+font-weight:bold;
+margin-bottom:20px;
+}
+
+.menu button{
+width:100%;
+padding:10px;
+margin:4px 0;
+border:none;
+border-radius:6px;
+background:#1f2937;
+color:white;
+cursor:pointer;
+}
+
+.menu button:hover{
+background:#374151;
+}
+
+.main{
+flex:1;
+padding:20px;
+overflow:auto;
+}
+
+.card{
+background:#111827;
+padding:15px;
+border-radius:8px;
+margin-bottom:15px;
+}
+
+input,textarea{
+width:100%;
+padding:8px;
+margin:5px 0;
+background:#020617;
+border:1px solid #374151;
+color:white;
+border-radius:6px;
+}
+
+button{
+padding:8px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+margin-top:5px;
+background:#3b82f6;
+color:white;
+}
+
+.tab{display:none}
+.active{display:block}
+
+.result{
+background:#020617;
+padding:10px;
+border-radius:6px;
+margin-top:5px;
+}
+
+.login{
+position:absolute;
+width:100%;
+height:100%;
+display:flex;
+align-items:center;
+justify-content:center;
+background:#0b0f17;
+}
+
+.loginbox{
+background:#111827;
+padding:30px;
+border-radius:10px;
+width:300px;
+}
+
+img{
+max-width:120px;
+border-radius:6px;
+}
+
+#radioChat{
+height:200px;
+overflow:auto;
+background:#020617;
+padding:10px;
+border-radius:6px;
+}
+
+.artigo{
+display:block;
+padding:6px;
+border-bottom:1px solid #1f2937;
+}
+
+.tag{
+background:red;
+padding:2px 6px;
+font-size:10px;
+border-radius:4px;
+margin-left:6px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="loginTela" class="login">
+<div class="loginbox">
+
+<h2>Login MDT</h2>
+
+<input id="usuario" placeholder="Utilizador">
+<input id="senha" type="password" placeholder="Senha">
+
+<button onclick="async function login(){
+
+let user=document.getElementById("usuario").value
+let pass=document.getElementById("senha").value
+
+let res=await fetch("http://localhost:3000/login",{
+method:"POST",
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({
+username:user,
+password:pass
+})
+})
+
+let data=await res.json()
+
+if(data.success){
+document.getElementById("loginTela").style.display="none"
+}else{
+alert("Login inválido")
+}
+
+}">Entrar</button>
+
+</div>
+</div>
+
+<div class="sidebar">
+
+<div class="logo">🚔 MDT</div>
+
+<div class="menu">
+<button onclick="openTab('dashboard')">Dashboard</button>
+<button onclick="openTab('cidadaos')">Cidadãos</button>
+<button onclick="openTab('veiculos')">Veículos</button>
+<button onclick="openTab('mandados')">Mandados</button>
+<button onclick="openTab('prisao')">Prisões</button>
+<button onclick="openTab('usuarios')">Policiais</button>
+<button onclick="openTab('radio')">Rádio</button>
+</div>
+
+</div>
+
+<div class="main">
+
+<div id="dashboard" class="tab active">
+<div class="card">
+<h2>Sistema MDT</h2>
+Terminal policial ativo.
+</div>
+</div>
+
+<div id="cidadaos" class="tab">
+
+<div class="card">
+
+<h3>Criar cidadão</h3>
+
+<input id="cidNome" placeholder="Nome">
+<input id="cidRG" placeholder="RG">
+
+<input type="file" id="cidFoto">
+
+<button onclick="criarCidadao()">Criar</button>
+
+</div>
+
+<div class="card">
+
+<h3>Buscar cidadão</h3>
+
+<input id="buscarCid">
+
+<button onclick="buscarCidadao()">Buscar</button>
+
+<div id="resultadoCid"></div>
+
+</div>
+
+</div>
+
+<div id="veiculos" class="tab">
+
+<div class="card">
+
+<h3>Registrar veículo</h3>
+
+<input id="placa" placeholder="Placa">
+<input id="dono" placeholder="Dono">
+
+<button onclick="salvarVeiculo()">Salvar</button>
+
+</div>
+
+</div>
+
+<div id="mandados" class="tab">
+
+<div class="card">
+
+<h3>Novo mandado</h3>
+
+<input id="mandadoRG" placeholder="RG">
+<textarea id="motivoMandado"></textarea>
+
+<button onclick="criarMandado()">Criar</button>
+
+</div>
+
+<div class="card">
+<h3>Mandados ativos</h3>
+<div id="listaMandados"></div>
+</div>
+
+</div>
+
+<div id="prisao" class="tab">
+
+<div class="card">
+
+<h3>Crimes</h3>
+
+<div id="listaArtigos"></div>
+
+<br>
+
+<label><input type="checkbox" id="reuPrimario"> Réu primário (-10%)</label><br>
+<label><input type="checkbox" id="reuConfesso"> Réu confesso (-10%)</label><br>
+<label><input type="checkbox" id="advogado"> Advogado (-20%)</label>
+
+<div class="result">
+
+Pena total: <span id="penaTotal">0</span> meses<br>
+Multa total: <span id="multaTotal">0</span>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="usuarios" class="tab">
+
+<div class="card">
+
+<h3>Criar policial</h3>
+
+<input id="novoUser">
+<input id="novaSenha">
+
+<button onclick="async function criarUsuario(){
+
+let user=document.getElementById("novoUser").value
+let pass=document.getElementById("novaSenha").value
+
+let res=await fetch("http://localhost:3000/criar-policial",{
+method:"POST",
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({
+username:user,
+password:pass
+})
+})
+
+let data=await res.json()
+
+if(data.success){
+alert("Policial criado!")
+}else{
+alert("Erro ao criar usuário")
+}
+
+}">Criar</button>
+
+</div>
+
+<div class="card">
+<div id="listaUsuarios"></div>
+</div>
+
+</div>
+
+<div id="radio" class="tab">
+
+<div class="card">
+
+<input id="radioTexto">
+<button onclick="enviarRadio()">Enviar</button>
+
+<div id="radioChat"></div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function db(n){return JSON.parse(localStorage.getItem(n)||"{}")}
+function save(n,v){localStorage.setItem(n,JSON.stringify(v))}
+
+function openTab(id){
+document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"))
+document.getElementById(id).classList.add("active")
+}
+
+async function hashSenha(texto){
+let enc=new TextEncoder().encode(texto)
+let hash=await crypto.subtle.digest("SHA-256",enc)
+return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,"0")).join("")
+}
+
+async function login(){
+
+let usuarios=db("usuarios")
+
+if(!usuarios["Junior Bradford"]){
+
+usuarios["Junior Bradford"]={
+senha:await hashSenha("slbenfica13")
+}
+
+save("usuarios",usuarios)
+
+}
+
+let user=document.getElementById("usuario").value
+let pass=document.getElementById("senha").value
+
+let hash=await hashSenha(pass)
+
+if(usuarios[user] && usuarios[user].senha===hash){
+
+document.getElementById("loginTela").style.display="none"
+
+}else{
+
+alert("Login inválido")
+
+}
+
+}
+
+function criarCidadao(){
+
+let file=document.getElementById("cidFoto").files[0]
+
+if(!file){
+alert("Foto obrigatória")
+return
+}
+
+let reader=new FileReader()
+
+reader.onload=function(){
+
+let c=db("cidadaos")
+
+c[cidRG.value]={
+nome:cidNome.value,
+foto:reader.result
+}
+
+save("cidadaos",c)
+
+}
+
+reader.readAsDataURL(file)
+
+}
+
+function buscarCidadao(){
+
+let c=db("cidadaos")[buscarCid.value]
+
+if(!c){
+resultadoCid.innerHTML="Não encontrado"
+return
+}
+
+resultadoCid.innerHTML=`<b>${c.nome}</b><br><img src="${c.foto}">`
+
+}
+
+function salvarVeiculo(){
+
+let v=db("veiculos")
+
+v[placa.value]={dono:dono.value}
+
+save("veiculos",v)
+
+}
+
+function criarMandado(){
+
+let m=db("mandados")
+
+m[mandadoRG.value]=motivoMandado.value
+
+save("mandados",m)
+
+listarMandados()
+
+}
+
+function listarMandados(){
+
+let m=db("mandados")
+let html=""
+
+for(let i in m){
+
+html+=`<div class="result">${i}<br>${m[i]}</div>`
+
+}
+
+listaMandados.innerHTML=html
+
+}
+
+let artigos=[
+
+{cat:"Crimes Contra a Vida",nome:"Art.104 - Homicídio Doloso Qualificado",pena:80,multa:100000,inafiancavel:true},
+{cat:"Crimes Contra a Vida",nome:"Art.105 - Homicídio Doloso",pena:60,multa:80000,inafiancavel:true},
+{cat:"Crimes Contra Patrimônio",nome:"Art.113 - Furto",pena:15,multa:15000},
+{cat:"Crimes Contra Patrimônio",nome:"Art.118 - Roubo",pena:40,multa:40000},
+{cat:"Crimes Ordem Pública",nome:"Art.145 - Ameaça",pena:10,multa:8000},
+{cat:"Crimes Ordem Pública",nome:"Art.152 - Vandalismo",pena:12,multa:9000},
+{cat:"Crimes Ordem Pública",nome:"Art.162 - Resistência à Prisão",pena:20,multa:20000}
+
+]
+
+function carregarArtigos(){
+
+let html=""
+let atual=""
+
+artigos.forEach(a=>{
+
+if(atual!=a.cat){
+
+html+=`<h4>${a.cat}</h4>`
+atual=a.cat
+
+}
+
+html+=`
+
+<label class="artigo">
+
+<input type="checkbox" class="crime" data-pena="${a.pena}" data-multa="${a.multa}" onchange="calcPrisao()">
+
+${a.nome}
+
+${a.inafiancavel?'<span class="tag">INAFIANÇÁVEL</span>':""}
+
+</label>
+
+`
+
+})
+
+listaArtigos.innerHTML=html
+
+}
+
+function calcPrisao(){
+
+let pena=0
+let multa=0
+
+document.querySelectorAll(".crime:checked").forEach(c=>{
+pena+=Number(c.dataset.pena)
+multa+=Number(c.dataset.multa)
+})
+
+let red=0
+
+if(reuPrimario.checked)red+=0.1
+if(reuConfesso.checked)red+=0.1
+if(advogado.checked)red+=0.2
+
+pena=pena-(pena*red)
+
+penaTotal.innerText=Math.round(pena)
+multaTotal.innerText=multa
+
+}
+
+let canal=new BroadcastChannel("radio")
+
+function enviarRadio(){
+
+canal.postMessage({
+msg:radioTexto.value
+})
+
+radioTexto.value=""
+
+}
+
+canal.onmessage=e=>{
+
+radioChat.innerHTML+=`<div class="result">${e.data.msg}</div>`
+
+}
+
+carregarArtigos()
+listarMandados()
+
+</script>
+
+</body>
+</html>
